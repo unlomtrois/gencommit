@@ -38,6 +38,12 @@ fn run() -> Result<()> {
 
     if let Some(command) = cli.command {
         return match command {
+            Command::Initialize => {
+                let repo = Repository::discover()?;
+                let path = config.init_project(repo.root())?;
+                println!("Created {}", path.display());
+                Ok(())
+            }
             Command::Auth { command } => match command {
                 AuthCommand::Login => match config.provider {
                     Provider::Codex => codex.login(),
@@ -80,7 +86,6 @@ fn run() -> Result<()> {
         bail!("interactive generation requires a terminal");
     }
 
-    let variants = cli.variants.unwrap_or(config.variants);
     let selection = if cli.all || cli.paths.is_empty() {
         Selection::All
     } else {
@@ -88,10 +93,20 @@ fn run() -> Result<()> {
     };
 
     let repo = Repository::discover()?;
+    let project_config = config.apply_project(repo.root())?;
+    let variants = cli.variants.unwrap_or(config.variants);
+    let codex = Codex::new(config.codex_executable.clone(), config.model.clone());
+    let claude = Claude::new(
+        config.claude_executable.clone(),
+        config.claude_model.clone(),
+    );
     repo.ensure_no_conflicts(&selection)?;
     let mut snapshot = repo.snapshot(&selection)?;
 
     println!("Repository: {}", repo.root().display());
+    if let Some(path) = project_config {
+        println!("Project config: {}", path.display());
+    }
     println!(
         "Changes: {} file(s), {} patch bytes",
         snapshot.files,

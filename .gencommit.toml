@@ -1,0 +1,6 @@
+# Shared gencommit settings for this repository.
+provider = "codex"
+variants = 3
+history_limit = 10
+model = "gpt-5.6-luna"
+instructions = "Use Conventional Commits with a package scope."

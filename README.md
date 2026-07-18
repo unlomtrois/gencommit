@@ -72,3 +72,23 @@ claude_model = "haiku"
 Run `gencommit model` to fetch Codex's current model catalog, choose a model with the arrow-key interface, and save it to this file.
 
 Run `gencommit provider` to switch between Codex/ChatGPT and Claude Code/Claude.ai. `gencommit auth` and `gencommit model` operate on the selected provider. Claude generation uses safe mode, disables built-in tools, and does not persist sessions.
+
+### Repository configuration
+
+Add `.gencommit.toml` to a repository root to share commit-message conventions with the project:
+
+```sh
+gencommit init
+```
+
+This creates the file from your current user-level generation settings and refuses to overwrite an existing project configuration. You can then edit and commit it. For example:
+
+```toml
+provider = "claude"
+claude_model = "haiku"
+variants = 3
+history_limit = 20
+instructions = "Use Conventional Commits with a package scope."
+```
+
+Repository settings override the user configuration for commit generation. The `-v` command-line option overrides both. For safety, repository configuration cannot change provider executable paths or authentication; `gencommit provider`, `gencommit model`, and `gencommit auth` continue to manage the user configuration.

@@ -23,6 +23,9 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// Create a repository-local .gencommit.toml file.
+    #[command(name = "init")]
+    Initialize,
     /// Manage authentication for the selected provider.
     Auth {
         #[command(subcommand)]
