@@ -2,8 +2,15 @@
 name = "gencommit"
 version = "0.2.0"
 edition = "2024"
+rust-version = "1.85"
 description = "Generate and approve Git commit messages with subscription-backed coding CLIs"
 license = "MIT"
+repository = "https://github.com/unlomtrois/gencommit"
+homepage = "https://github.com/unlomtrois/gencommit"
+readme = "README.md"
+keywords = ["git", "commit", "cli", "ai", "terminal"]
+categories = ["command-line-utilities", "development-tools"]
+publish = ["crates-io"]
 
 [dependencies]
 anyhow = "1.0"

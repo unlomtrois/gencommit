@@ -17,6 +17,16 @@ ChatGPT/Claude subscriptions and provider API billing are separate. `gencommit` 
 
 ## Install and authenticate
 
+Install the latest published crate:
+
+```sh
+cargo install gencommit
+```
+
+Alternatively, download the archive for your Linux or macOS architecture from the [GitHub Releases](https://github.com/unlomtrois/gencommit/releases) page and place `gencommit` on your `PATH`.
+
+For development builds:
+
 ```sh
 cargo install --path .
 gencommit auth login
@@ -62,3 +72,9 @@ claude_model = "haiku"
 Run `gencommit model` to fetch Codex's current model catalog, choose a model with the arrow-key interface, and save it to this file.
 
 Run `gencommit provider` to switch between Codex/ChatGPT and Claude Code/Claude.ai. `gencommit auth` and `gencommit model` operate on the selected provider. Claude generation uses safe mode, disables built-in tools, and does not persist sessions.
+
+## Releasing
+
+Releases are driven by version tags. Update `version` in `Cargo.toml`, commit the change, and push a matching tag such as `v0.2.0`. GitHub Actions validates the package, builds Linux and macOS archives for x86_64 and ARM64, publishes to crates.io, and creates the GitHub Release.
+
+The repository must define a `CARGO_REGISTRY_TOKEN` Actions secret containing a crates.io token authorized to publish `gencommit`.
