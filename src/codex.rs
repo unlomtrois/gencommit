@@ -27,20 +27,20 @@ impl CommitMessage {
         }
     }
 
-    fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self, provider: &str) -> Result<()> {
         if self.subject.trim().is_empty() || self.subject.contains('\n') {
-            bail!("Codex returned an empty or multiline commit subject");
+            bail!("{provider} returned an empty or multiline commit subject");
         }
         if self.subject.chars().count() > 100 {
-            bail!("Codex returned a commit subject longer than 100 characters");
+            bail!("{provider} returned a commit subject longer than 100 characters");
         }
         Ok(())
     }
 }
 
 #[derive(Debug, Deserialize)]
-struct Generation {
-    variants: Vec<CommitMessage>,
+pub(crate) struct Generation {
+    pub variants: Vec<CommitMessage>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -48,7 +48,7 @@ pub struct Model {
     pub slug: String,
     pub display_name: String,
     pub description: String,
-    visibility: String,
+    pub(crate) visibility: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -181,7 +181,7 @@ impl Codex {
             );
         }
         for message in &generation.variants {
-            message.validate()?;
+            message.validate("Codex")?;
         }
         let mut rendered: Vec<_> = generation
             .variants
@@ -197,7 +197,7 @@ impl Codex {
     }
 }
 
-fn schema(count: u8) -> String {
+pub(crate) fn schema(count: u8) -> String {
     serde_json::json!({
         "type": "object",
         "additionalProperties": false,
@@ -222,7 +222,7 @@ fn schema(count: u8) -> String {
     .to_string()
 }
 
-fn prompt(patch: &str, history: &[String], count: u8, extra: Option<&str>) -> String {
+pub(crate) fn prompt(patch: &str, history: &[String], count: u8, extra: Option<&str>) -> String {
     let history = if history.is_empty() {
         "(no existing commits)".to_owned()
     } else {

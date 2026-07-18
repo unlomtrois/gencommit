@@ -1,3 +1,4 @@
+mod claude;
 mod cli;
 mod codex;
 mod config;
@@ -10,9 +11,10 @@ use std::process::ExitCode;
 use anyhow::{Result, bail};
 use clap::Parser;
 
+use crate::claude::Claude;
 use crate::cli::{AuthCommand, Cli, Command};
 use crate::codex::Codex;
-use crate::config::Config;
+use crate::config::{Config, Provider};
 use crate::git::{Repository, Selection};
 
 fn main() -> ExitCode {
@@ -29,23 +31,45 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
     let mut config = Config::load()?;
     let codex = Codex::new(config.codex_executable.clone(), config.model.clone());
+    let claude = Claude::new(
+        config.claude_executable.clone(),
+        config.claude_model.clone(),
+    );
 
     if let Some(command) = cli.command {
         return match command {
             Command::Auth { command } => match command {
-                AuthCommand::Login => codex.login(),
-                AuthCommand::Status => codex.login_status(),
+                AuthCommand::Login => match config.provider {
+                    Provider::Codex => codex.login(),
+                    Provider::Claude => claude.login(),
+                },
+                AuthCommand::Status => match config.provider {
+                    Provider::Codex => codex.login_status(),
+                    Provider::Claude => claude.login_status(),
+                },
             },
             Command::Model => {
                 if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
                     bail!("model selection requires a terminal");
                 }
-                let models = codex.models()?;
-                let current = config.model.as_deref();
+                let (models, current) = match config.provider {
+                    Provider::Codex => (codex.models()?, config.model.as_deref()),
+                    Provider::Claude => (claude.models(), config.claude_model.as_deref()),
+                };
                 if let Some(model) = selector::select_model(&models, current)? {
                     let slug = model.slug.clone();
                     let path = config.set_model(slug.clone())?;
                     println!("Selected {slug}; saved to {}", path.display());
+                }
+                Ok(())
+            }
+            Command::Provider => {
+                if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
+                    bail!("provider selection requires a terminal");
+                }
+                if let Some(provider) = selector::select_provider(config.provider)? {
+                    let path = config.set_provider(provider)?;
+                    println!("Selected {}; saved to {}", provider.name(), path.display());
                 }
                 Ok(())
             }
@@ -73,17 +97,29 @@ fn run() -> Result<()> {
         snapshot.files,
         snapshot.patch.len()
     );
-    println!("The selected diff will be sent to Codex/OpenAI.");
+    println!(
+        "The selected diff will be sent to {}.",
+        config.provider.name()
+    );
 
     loop {
         let history = repo.recent_subjects(config.history_limit)?;
-        let messages = codex.generate(
-            repo.root(),
-            &snapshot.patch,
-            &history,
-            variants,
-            config.instructions.as_deref(),
-        )?;
+        let messages = match config.provider {
+            Provider::Codex => codex.generate(
+                repo.root(),
+                &snapshot.patch,
+                &history,
+                variants,
+                config.instructions.as_deref(),
+            )?,
+            Provider::Claude => claude.generate(
+                repo.root(),
+                &snapshot.patch,
+                &history,
+                variants,
+                config.instructions.as_deref(),
+            )?,
+        };
 
         match selector::select(&messages)? {
             selector::Action::Cancel => return Ok(()),

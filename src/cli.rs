@@ -23,13 +23,15 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Manage the Codex/ChatGPT login used by gencommit.
+    /// Manage authentication for the selected provider.
     Auth {
         #[command(subcommand)]
         command: AuthCommand,
     },
-    /// Choose the Codex model used for commit generation.
+    /// Choose the selected provider's model.
     Model,
+    /// Choose the AI provider used for commit generation.
+    Provider,
 }
 
 #[derive(Debug, Subcommand)]

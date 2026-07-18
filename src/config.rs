@@ -5,23 +5,46 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Provider {
+    #[default]
+    Codex,
+    Claude,
+}
+
+impl Provider {
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Codex => "Codex",
+            Self::Claude => "Claude",
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Config {
+    pub provider: Provider,
     pub variants: u8,
     pub instructions: Option<String>,
     pub codex_executable: PathBuf,
+    pub claude_executable: PathBuf,
     pub model: Option<String>,
+    pub claude_model: Option<String>,
     pub history_limit: usize,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
+            provider: Provider::Codex,
             variants: 3,
             instructions: None,
             codex_executable: PathBuf::from("codex"),
+            claude_executable: PathBuf::from("claude"),
             model: Some("gpt-5.4-mini".to_owned()),
+            claude_model: Some("haiku".to_owned()),
             history_limit: 20,
         }
     }
@@ -52,7 +75,19 @@ impl Config {
     }
 
     pub fn set_model(&mut self, model: String) -> Result<PathBuf> {
-        self.model = Some(model);
+        match self.provider {
+            Provider::Codex => self.model = Some(model),
+            Provider::Claude => self.claude_model = Some(model),
+        }
+        self.save()
+    }
+
+    pub fn set_provider(&mut self, provider: Provider) -> Result<PathBuf> {
+        self.provider = provider;
+        self.save()
+    }
+
+    fn save(&self) -> Result<PathBuf> {
         let path = Self::path().context("could not determine the user configuration directory")?;
         let parent = path.parent().context("invalid configuration path")?;
         fs::create_dir_all(parent).with_context(|| format!("create {}", parent.display()))?;

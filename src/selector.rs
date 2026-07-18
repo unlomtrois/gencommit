@@ -15,6 +15,7 @@ use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wra
 
 use crate::codex::CommitMessage;
 use crate::codex::Model;
+use crate::config::Provider;
 
 pub enum Action {
     Select(CommitMessage),
@@ -72,6 +73,28 @@ pub fn select_model(models: &[Model], current: Option<&str>) -> Result<Option<Mo
         .unwrap_or(0);
     match pick("Codex models", &entries, selected, false)? {
         PickAction::Select(index) => Ok(Some(models[index].clone())),
+        PickAction::Cancel | PickAction::Regenerate => Ok(None),
+    }
+}
+
+pub fn select_provider(current: Provider) -> Result<Option<Provider>> {
+    let providers = [Provider::Codex, Provider::Claude];
+    let entries = vec![
+        (
+            "Codex (ChatGPT)".into(),
+            "Generate through Codex using the current ChatGPT login.".into(),
+        ),
+        (
+            "Claude Code".into(),
+            "Generate through Claude Code using the current Claude.ai login.".into(),
+        ),
+    ];
+    let selected = providers
+        .iter()
+        .position(|provider| *provider == current)
+        .unwrap_or(0);
+    match pick("Providers", &entries, selected, false)? {
+        PickAction::Select(index) => Ok(Some(providers[index])),
         PickAction::Cancel | PickAction::Regenerate => Ok(None),
     }
 }
