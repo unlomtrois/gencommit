@@ -72,9 +72,3 @@ claude_model = "haiku"
 Run `gencommit model` to fetch Codex's current model catalog, choose a model with the arrow-key interface, and save it to this file.
 
 Run `gencommit provider` to switch between Codex/ChatGPT and Claude Code/Claude.ai. `gencommit auth` and `gencommit model` operate on the selected provider. Claude generation uses safe mode, disables built-in tools, and does not persist sessions.
-
-## Releasing
-
-Releases are driven by version tags. Update `version` in `Cargo.toml`, commit the change, and push a matching tag such as `v0.2.0`. GitHub Actions validates the package, builds Linux and macOS archives for x86_64 and ARM64, publishes to crates.io, and creates the GitHub Release.
-
-The repository must define a `CARGO_REGISTRY_TOKEN` Actions secret containing a crates.io token authorized to publish `gencommit`.
